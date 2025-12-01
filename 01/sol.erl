@@ -32,38 +32,32 @@ update2(Instr, #dial{value=Value, password=Password}) ->
 	#dial{value=Value1, password=Password + Rot}.
 eval2(Value, Instr) -> eval2(Value, Instr, 0).
 
-% sanity check assert
-eval2(Value, _, _) when Value < 0 -> error("negative value not allowed");
+% noop
+eval2(Value, 0, Rot) ->
+	{Value, Rot};
 
-% special case around 0 – on leftward rotation that lands on exactly 0, treat
-% initial reaching 0 as the password increment but NOT the rotation away from
-% 0 leftwards
-eval2(Value, Instr, Rot) when Value + Instr == 0 -> {0, Rot + 1};
-eval2(0, Instr, Rot) when Instr < 0 -> eval2(99, Instr + 1, Rot);
+% starting from 0 (preserve rotation number)
+eval2(0, Instr, Rot) when Instr > 0 ->
+	eval2(1, Instr - 1, Rot);
+eval2(0, Instr, Rot) when Instr < 0 ->
+	eval2(99, Instr + 1, Rot);
 
-% left/right turns within range without crossing zero boundary
-eval2(Value, Instr, Rot)
-	when Value + Instr > 0, Value + Instr < 100 ->
-	{Value + Instr, Rot};
+% more than a full turn
+eval2(Value, Instr, Rot) when Value + Instr >= 200 ->
+	eval2(Value, Instr - 100, Rot + 1);
+eval2(Value, Instr, Rot) when Value + Instr =< -100 ->
+	eval2(Value, Instr + 100, Rot + 1);
 
-% overfull turns
-eval2(Value, Instr, Rot) when Instr div 100 /= 0 ->
-	Rots = abs(Instr div 100),
-	Rem = Instr rem 100,
-	eval2(Value, Rem, Rot + Rots);
+% crossing zero boundary
+eval2(Value, Instr, Rot) when Value + Instr >= 100 ->
+	{(Value + Instr) rem 100, Rot + 1};
+eval2(Value, Instr, Rot) when Value + Instr < 0 ->
+	{100 + (Value + Instr) rem 100, Rot + 1};
 
-% overflowing rightward turns
-eval2(Value, Instr, Rot) when Instr + Value >= 100 ->
-	Rots = (Instr + Value) div 100,
-	Rem = (Instr + Value) rem 100,
-	{Rem, Rot + Rots};
-% overflowing leftward turns
-eval2(Value, Instr, Rot) when Instr + Value < 0 ->
-	Rots = (Instr + Value) div 100,
-	Rem = (Instr + Value) rem 100,
-	{100 + Rem, Rot + abs(Rots) + 1};
+% lands on exactly 0
+eval2(Value, Instr, Rot) when Value + Instr == 0; Value + Instr == 100 ->
+	{0, Rot + 1};
 
-eval2(Value, Instr, Rot) when Instr < 0 ->
-	{Value + 100 + Instr, Rot};
-eval2(Value, Instr, Rot) when Instr < 100, Value + Instr < 100 ->
+% within boundary
+eval2(Value, Instr, Rot) when Value + Instr > 0, Value + Instr < 100 ->
 	{Value + Instr, Rot}.
