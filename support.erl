@@ -1,5 +1,5 @@
 -module(support).
--export([slurp/1, input/1, count/2, in_range/2]).
+-export([slurp/1, input/1, count/2, in_range/2, scan/3, scanmap/3]).
 
 -spec slurp(iodata()) -> list(string()).
 slurp(Filename) ->
@@ -34,3 +34,19 @@ count(Predicate, List) ->
 in_range(X, {Min, _}) when X < Min -> false;
 in_range(X, {_, Max}) when X > Max -> false;
 in_range(_, _) -> true.
+
+-spec scan(fun((El, Acc) -> Acc), Acc, list(El)) -> list(Acc).
+scan(Fun, Acc0, List) ->
+	scan(Fun, Acc0, List, [Acc0]).
+scan(_, _, [], Accs) -> lists:reverse(Accs);
+scan(Fun, Acc1, [X | Rest], Accs) ->
+	Acc2 = Fun(X, Acc1),
+	scan(Fun, Acc2, Rest, [Acc2 | Accs]).
+
+
+-spec scanmap(fun((El, Acc) -> Acc), Acc, list(El)) -> list({El, Acc}).
+scanmap(Fun, Acc0, List) ->
+	scan(fun (El, {_, Acc1}) ->
+		Acc2 = Fun(El, Acc1),
+		{El, Acc2}
+	end, {nil, Acc0}, List).
