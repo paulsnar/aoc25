@@ -1,5 +1,5 @@
 -module(support).
--export([slurp/1, input/1, count/2, in_range/2, scan/3, scanmap/3]).
+-export([slurp/1, input/1, count/2, in_range/2, scan/3, scanmap/3, intpow/2]).
 
 -spec slurp(iodata()) -> list(string()).
 slurp(Filename) ->
@@ -35,6 +35,11 @@ in_range(X, {Min, _}) when X < Min -> false;
 in_range(X, {_, Max}) when X > Max -> false;
 in_range(_, _) -> true.
 
+-spec intpow(integer(), integer()) -> integer().
+intpow(Base, Power) -> intpow(Base, Power, 1).
+intpow(_, 0, Mul) -> Mul;
+intpow(Base, Power, Mul) -> intpow(Base, Power - 1, Mul * Base).
+
 -spec scan(fun((El, Acc) -> Acc), Acc, list(El)) -> list(Acc).
 scan(Fun, Acc0, List) ->
 	scan(Fun, Acc0, List, [Acc0]).
@@ -42,7 +47,6 @@ scan(_, _, [], Accs) -> lists:reverse(Accs);
 scan(Fun, Acc1, [X | Rest], Accs) ->
 	Acc2 = Fun(X, Acc1),
 	scan(Fun, Acc2, Rest, [Acc2 | Accs]).
-
 
 -spec scanmap(fun((El, Acc) -> Acc), Acc, list(El)) -> list({El, Acc}).
 scanmap(Fun, Acc0, List) ->
