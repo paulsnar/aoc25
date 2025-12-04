@@ -1,5 +1,6 @@
 -module(support).
--export([slurp/1, input/1, count/2, in_range/2, scan/3, scanmap/3, intpow/2]).
+-export([slurp/1, input/1, count/2, in_range/2, scan/3, scanmap/3, intpow/2,
+	fixpoint/2]).
 
 -spec slurp(iodata()) -> list(string()).
 slurp(Filename) ->
@@ -54,3 +55,11 @@ scanmap(Fun, Acc0, List) ->
 		Acc2 = Fun(El, Acc1),
 		{El, Acc2}
 	end, {nil, Acc0}, List).
+
+-spec fixpoint(Acc, fun((Acc) -> Acc)) -> Acc.
+fixpoint(Acc1, Fun) ->
+	Acc2 = Fun(Acc1),
+	case Acc1 =:= Acc2 of
+		true -> Acc1;
+		false -> fixpoint(Acc2, Fun)
+	end.
