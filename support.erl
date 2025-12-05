@@ -56,10 +56,10 @@ scanmap(Fun, Acc0, List) ->
 		{El, Acc2}
 	end, {nil, Acc0}, List).
 
--spec fixpoint(Acc, fun((Acc) -> Acc)) -> Acc.
-fixpoint(Acc1, Fun) ->
+-spec fixpoint(fun((Acc) -> Acc), Acc) -> Acc.
+fixpoint(Fun, Acc1) ->
 	Acc2 = Fun(Acc1),
 	case Acc1 =:= Acc2 of
 		true -> Acc1;
-		false -> fixpoint(Acc2, Fun)
+		false -> fixpoint(Fun, Acc2)
 	end.

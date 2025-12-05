@@ -48,5 +48,5 @@ clear(Cells) ->
 	end, Cells).
 
 sol2(Cells0) ->
-	Cells1 = support:fixpoint(Cells0, fun clear/1),
+	Cells1 = support:fixpoint(fun clear/1, Cells0),
 	maps:size(Cells0) - maps:size(Cells1).
