@@ -42,6 +42,33 @@ eval({add, Args}) ->
 eval({mul, Args}) ->
 	lists:foldl(fun(X, Y) -> X * Y end, 1, Args).
 
-sol1(Ops) ->
+sol(Ops) ->
 	lists:sum([eval(Op) || Op <- Ops]).
 
+parse2(Lines) ->
+	Cols = transpose(Lines),
+	parse2_start(Cols, []).
+parse2_start([], Ops) ->
+	lists:reverse(Ops);
+parse2_start([NumAndOp | Rest], Ops) ->
+	Op = case lists:last(NumAndOp) of
+		$+ -> add;
+		$* -> mul
+	end,
+	Arg = parse2_arg(NumAndOp),
+	parse2_digits(Rest, [Arg], Op, Ops).
+parse2_digits([], Args, Op, Ops) ->
+	[{Op, Args} | Ops];
+parse2_digits([Line | Rest], Args, Op, Ops) ->
+	case string:trim(Line) of
+		"" ->
+			parse2_start(Rest, [{Op, Args} | Ops]);
+		_ ->
+			Arg = parse2_arg(Line),
+			parse2_digits(Rest, [Arg | Args], Op, Ops)
+	end.
+parse2_arg(Line) ->
+	Num = string:trim(withoutlast(Line)),
+	list_to_integer(Num).
+
+withoutlast(X) -> lists:sublist(X, 1, length(X) - 1).
