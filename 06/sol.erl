@@ -33,9 +33,11 @@ transpose_hdtl([], Heads, Tails) ->
 transpose_hdtl([List | Rest], Heads, Tails) ->
 	[Head | Tail] = List,
 	transpose_hdtl(Rest, [Head | Heads], [Tail | Tails]).
-transpose_isempty([]) -> true;
-transpose_isempty([[] | Rest]) -> transpose_isempty(Rest);
-transpose_isempty([[_ | _] | _]) -> false.
+transpose_isempty(Lists) ->
+	lists:all(fun
+		([]) -> true;
+		(_) -> false
+	end, Lists).
 
 eval({add, Args}) ->
 	lists:foldl(fun(X, Y) -> X + Y end, 0, Args);
