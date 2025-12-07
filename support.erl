@@ -1,6 +1,6 @@
 -module(support).
 -export([slurp/1, input/1, count/2, in_range/2, scan/3, scanmap/3, intpow/2,
-	fixpoint/2]).
+	fixpoint/2, pipe/2]).
 
 -spec slurp(iodata()) -> list(string()).
 slurp(Filename) ->
@@ -63,3 +63,7 @@ fixpoint(Fun, Acc1) ->
 		true -> Acc1;
 		false -> fixpoint(Fun, Acc2)
 	end.
+
+-spec pipe(list(fun((El) -> El)), El) -> El.
+pipe([], El) -> El;
+pipe([Fun | Rest], El) -> pipe(Rest, Fun(El)).
