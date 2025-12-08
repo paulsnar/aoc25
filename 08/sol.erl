@@ -31,16 +31,17 @@ canonical(A = {X,Y,Za}, B = {X,Y,Zb}) when Za < Zb -> {A, B};
 canonical(A, A) -> {A, A};
 canonical(A, B) -> canonical(B, A).
 
-sol1(Els, N) ->
+conn_prio(Els) ->
 	Matrix = distance_matrix(Els),
-	MatrixEntries = lists:sort(fun({_, Da}, {_, Db}) ->
+	MatrixEntries = lists:sort(fun({_,Da}, {_,Db}) ->
 		Da =< Db
 	end, maps:to_list(Matrix)),
+	[Conn || {Conn,_} <- MatrixEntries].
+
+sol1(Els, N) ->
+	Conns = conn_prio(Els),
 	Graph = graph_build(Els),
-	graph_connect(Graph, [
-		Conn
-		|| {Conn, _Weight} <- lists:sublist(MatrixEntries, N)
-	]),
+	graph_connect(Graph, lists:sublist(Conns, N)),
 	Hoods = lists:reverse(lists:sort(graph_circuits(Graph))),
 	[A,B,C | _] = Hoods,
 	A * B * C.
@@ -52,10 +53,13 @@ graph_build(Els) ->
 	end, Els),
 	DG.
 
+graph_connect_one(DG, A, B) ->
+	{A,B} = digraph:add_edge(DG, {A,B}, A, B, []),
+	{B,A} = digraph:add_edge(DG, {B,A}, B, A, []),
+	ok.
 graph_connect(DG, Conns) ->
 	lists:foreach(fun({A,B}) ->
-		{A,B} = digraph:add_edge(DG, {A,B}, A, B, []),
-		{B,A} = digraph:add_edge(DG, {B,A}, B, A, [])
+		ok = graph_connect_one(DG, A, B)
 	end, Conns).
 
 graph_circuits(DG) ->
@@ -91,3 +95,37 @@ graph_neighbors(DG, El, Hood) ->
 	].
 graph_other(A, {A,B}) -> B;
 graph_other(A, {B,A}) -> B.
+
+sol2(Els) ->
+	Conns = conn_prio(Els),
+	Graph = graph_build(Els),
+	{{X1,_,_}, {X2,_,_}} = graph_connect_unified(Graph, Conns, Els),
+	X1 * X2.
+
+graph_connect_unified(DG, Conns, Els) ->
+	NoConn = maps_from_list(Els),
+	YesConn = #{},
+	Pivot = maps_first_key(NoConn),
+	graph_connect_unified(DG, Conns, NoConn, YesConn, Pivot).
+graph_connect_unified(DG, [{A,B} | Rest], NoConn, YesConn, Pivot) ->
+	ok = graph_connect_one(DG, A, B),
+	NoConn1 = maps:without([A, B], NoConn),
+	YesConn1 = YesConn#{A => true, B => true},
+	case maps:size(NoConn1) of
+		0 -> {A, B};
+		_ ->
+			Pivot1 = case (A =:= Pivot) orelse (B =:= Pivot) of
+				true -> maps_first_key(NoConn1);
+				false -> Pivot
+			end,
+			graph_connect_unified(DG, Rest, NoConn1, YesConn1, Pivot1)
+	end.
+
+
+maps_from_list(List) ->
+	lists:foldl(fun(El,M) ->
+		maps:put(El, true, M)
+	end, #{}, List).
+maps_first_key(Map) ->
+	{K,_,_} = maps:next(maps:iterator(Map)),
+	K.
