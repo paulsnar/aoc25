@@ -98,27 +98,25 @@ graph_other(A, {B,A}) -> B.
 
 sol2(Els) ->
 	Conns = conn_prio(Els),
-	Graph = graph_build(Els),
-	{{X1,_,_}, {X2,_,_}} = graph_connect_unified(Graph, Conns, Els),
+	{{X1,_,_}, {X2,_,_}} = connect_unified(Conns, Els),
 	X1 * X2.
 
-graph_connect_unified(DG, Conns, Els) ->
+connect_unified(Conns, Els) ->
 	NoConn = maps_from_list(Els),
 	YesConn = #{},
 	Pivot = maps_first_key(NoConn),
-	graph_connect_unified(DG, Conns, NoConn, YesConn, Pivot).
-graph_connect_unified(DG, [{A,B} | Rest], NoConn, YesConn, Pivot) ->
-	ok = graph_connect_one(DG, A, B),
+	connect_unified(Conns, NoConn, YesConn, Pivot).
+connect_unified([{A,B} | Rest], NoConn, YesConn, Pivot) ->
 	NoConn1 = maps:without([A, B], NoConn),
 	YesConn1 = YesConn#{A => true, B => true},
-	case maps:size(NoConn1) of
-		0 -> {A, B};
-		_ ->
+	case NoConn1 =:= #{} of
+		true -> {A, B};
+		false ->
 			Pivot1 = case (A =:= Pivot) orelse (B =:= Pivot) of
 				true -> maps_first_key(NoConn1);
 				false -> Pivot
 			end,
-			graph_connect_unified(DG, Rest, NoConn1, YesConn1, Pivot1)
+			connect_unified(Rest, NoConn1, YesConn1, Pivot1)
 	end.
 
 
